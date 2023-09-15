@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1.0">
+		<title>Mingyu' 图床</title>
+		<style>
+			body {
+				font-family: Arial, sans-serif;
+				text-align: center;
+				background-color: #f0e6fa;
+				/* 粉蓝色背景 */
+				margin: 0;
+				padding: 0;
+			}
+
+			#container {
+				max-width: 400px;
+				margin: 0 auto;
+				background-color: #fff;
+				padding: 20px;
+				border-radius: 10px;
+				box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+			}
+
+			input[type="file"] {
+				display: none;
+			}
+
+			label[for="fileInput"] {
+				display: block;
+				background-color: #ff6b81;
+				/* 粉红色按钮 */
+				color: #fff;
+				padding: 10px 0;
+				/* 调整上下内边距，使按钮高度一致 */
+				border-radius: 5px;
+				cursor: pointer;
+				margin-bottom: 10px;
+				transition: background-color 0.3s ease;
+				width: 100%;
+				/* 设置按钮宽度为100% */
+			}
+
+			label[for="fileInput"].selected {
+				background-color: #4CAF50;
+				/* 绿色按钮 when selected */
+			}
+
+			button {
+				display: none;
+				/* 默认隐藏上传按钮 */
+				background-color: #3498db;
+				/* 蓝色按钮 */
+				color: #fff;
+				border: none;
+				padding: 10px 0;
+				/* 调整上下内边距，使按钮高度一致 */
+				border-radius: 5px;
+				cursor: pointer;
+				transition: background-color 0.3s ease;
+				width: 100%;
+				/* 设置按钮宽度为100% */
+			}
+
+			button.uploading {
+				background-color: #FFA500;
+				/* 橙色 when uploading */
+			}
+
+			#buttonContainer {
+				display: flex;
+				/* 使用 flex 布局 */
+				flex-direction: column;
+				/* 垂直排列 */
+				align-items: stretch;
+				/* 确保子元素的高度相等 */
+			}
+
+			#imagePreview {
+				margin-top: 20px;
+			}
+
+			#imagePreview p {
+				font-weight: bold;
+			}
+
+			#uploadedImage {
+				max-width: 100%;
+				height: auto;
+				margin-top: 20px;
+			}
+
+			#resultContainer {
+				display: none;
+				background-color: #4CAF50;
+				/* 绿色背景 */
+				color: #fff;
+				padding: 20px;
+				border-radius: 10px;
+				box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+				cursor: pointer;
+				/* 添加鼠标指针样式以指示可点击 */
+			}
+
+			#resultContainer p {
+				font-weight: bold;
+				margin-bottom: 10px;
+			}
+
+			#resultContainer a {
+				color: #fff;
+				text-decoration: none;
+				font-weight: bold;
+			}
+
+			#resultContainer a:hover {
+				text-decoration: underline;
+			}
+		</style>
+	</head>
+	<body>
+		<div id="container">
+			<h1>Mingyu' 图床</h1>
+			<!-- 将选择图片按钮和上传按钮包装在一个 div 中，设置样式以实现上下平行、大小一致和等高 -->
+			<div id="buttonContainer">
+				<label for="fileInput" id="fileInputLabel">请选择图片</label>
+				<input type="file" id="fileInput" accept="image/*" onchange="previewImage(this)">
+				<button id="uploadButton" onclick="uploadImage()" class="disabled">上传</button>
+			</div>
+			<div id="imagePreview"></div>
+			<br>
+
+			<div id="resultContainer">
+				<p><strong><span style="color: green;">点击绿色部分可复制图片URL：</span></strong><a id="imageUrl" href="#"
+						target="_blank"></a></p>
+				<p id="fileName"></p>
+			</div>
+			<p>&copy; 2023 <a href="https://github.ymyuuu.fun/">Mingyu</a></p>
+
+
+
+
+			<script>
+				let selectedImage = null;
+
+				function previewImage(input) {
+					const imagePreview = document.getElementById('imagePreview');
+					const uploadButton = document.getElementById('uploadButton');
+					const fileInputLabel = document.getElementById('fileInputLabel');
+					const resultContainer = document.getElementById('resultContainer'); // 新增这行
+
+					// 清除旧的结果
+					resultContainer.style.display = 'none'; // 新增这行
+
+					if (input.files && input.files[0]) {
+						selectedImage = input.files[0];
+
+						const reader = new FileReader();
+						reader.onload = function(e) {
+							imagePreview.innerHTML = `<p></p>`;
+							const img = document.createElement('img');
+							img.src = e.target.result;
+							img.style.maxWidth = '100%';
+							imagePreview.appendChild(img);
+							uploadButton.classList.remove('disabled');
+							uploadButton.classList.add('selected');
+							fileInputLabel.textContent = '已选择，点击重新选择';
+							fileInputLabel.classList.add('selected');
+							// 显示上传按钮
+							uploadButton.style.display = 'block';
+							// 自动聚焦到上传按钮
+							uploadButton.focus();
+						};
+
+						reader.readAsDataURL(input.files[0]);
+					}
+				}
+
+
+				async function uploadImage() {
+					const owner = '481257548';
+					const repo = '481257548';
+					const token = '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';
+					const uploadButton = document.getElementById('uploadButton');
+					const resultContainer = document.getElementById('resultContainer');
+					const imageUrlElement = document.getElementById('imageUrl');
+					const fileNameElement = document.getElementById('fileName');
+
+					if (!selectedImage || uploadButton.classList.contains('disabled')) {
+						return;
+					}
+
+					uploadButton.classList.add('uploading');
+					uploadButton.textContent = '上传中';
+					uploadButton.classList.remove('selected');
+					uploadButton.disabled = true;
+
+					const folderPath = await createFolderIfNeeded(owner, repo, 'images', token);
+
+					const reader = new FileReader();
+					reader.onload = async function() {
+						const content = reader.result.split(',')[1];
+						const currentTime = new Date().toLocaleTimeString('en-US', {
+							hour12: false
+						}).replace(/:/g, '');
+						const randomString = generateRandomString(6);
+						const fileName = `${currentTime}-${randomString}.png`;
+
+						await fetch(`https://api.github.com/repos/${owner}/${repo}/contents/${folderPath}${fileName}`, {
+							method: 'PUT',
+							headers: {
+								'Authorization': `token ${token}`
+							},
+							body: JSON.stringify({
+								message: `上传图片`,
+								content: content,
+								branch: 'main'
+							})
+						});
+
+						const imageUrl = `https://cdn.jsdelivr.net/gh/${owner}/${repo}@main/${folderPath}${fileName}`;
+
+						resultContainer.style.display = 'block';
+						imageUrlElement.textContent = imageUrl;
+						imageUrlElement.href = imageUrl;
+						fileNameElement.textContent = `文件名: ${fileName}`;
+
+						const fileInput = document.getElementById('fileInput');
+						fileInput.value = '';
+
+						uploadButton.classList.remove('uploading');
+						uploadButton.textContent = '上传';
+						uploadButton.disabled = false;
+						uploadButton.classList.add('disabled');
+						fileInputLabel.textContent = '请选择图片';
+						fileInputLabel.classList.remove('selected');
+						// 隐藏上传按钮
+						uploadButton.style.display = 'none';
+						// 隐藏图片预览
+						imagePreview.innerHTML = '';
+						// 自动聚焦到URL复制框
+						uploadButton.focus();
+					};
+
+					reader.readAsDataURL(selectedImage);
+				}
+
+				async function createFolderIfNeeded(owner, repo, folderName, token) {
+					const date = new Date();
+					const year = date.getFullYear();
+					const month = (date.getMonth() + 1).toString().padStart(2, '0');
+					const day = date.getDate().toString().padStart(2, '0');
+					const folderDate = `${year}${month}${day}`;
+
+					const folderPath = `${folderDate}/`;
+
+					const folderExists = await fetch(`https://api.github.com/repos/${owner}/${repo}/contents/${folderPath}`, {
+						headers: {
+							'Authorization': `token ${token}`
+						}
+					});
+
+					if (folderExists.status === 404) {
+						await fetch(`https://api.github.com/repos/${owner}/${repo}/contents/${folderPath}`, {
+							method: 'PUT',
+							headers: {
+								'Authorization': `token ${token}`
+							},
+							body: JSON.stringify({
+								message: `创建 ${folderDate} 文件夹`,
+								content: '',
+								branch: 'main'
+							})
+						});
+					}
+
+					return folderPath;
+				}
+
+				function generateRandomString(length) {
+					const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+					let result = '';
+					for (let i = 0; i < length; i++) {
+						const randomIndex = Math.floor(Math.random() * characters.length);
+						result += characters.charAt(randomIndex);
+					}
+					return result;
+				}
+
+				function copyToClipboard(text) {
+					const input = document.createElement('input');
+					input.value = text;
+					document.body.appendChild(input);
+					input.select();
+					document.execCommand('copy');
+					document.body.removeChild(input);
+				}
+
+				// 添加点击事件处理程序来复制URL
+				resultContainer.addEventListener('click', function() {
+					const imageUrl = document.getElementById('imageUrl').textContent;
+					copyToClipboard(imageUrl);
+					// alert('已复制图片URL到剪贴板');
+				});
+			</script>
+		</div>
+	</body>
+</html>
